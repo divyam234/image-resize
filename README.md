@@ -1,1 +1,1 @@
-# resize-service
+# Image Resize Service
