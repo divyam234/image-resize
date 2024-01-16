@@ -23,4 +23,6 @@ COPY --chown=user:user --from=builder /var/task/main /app/main
 
 USER user
 
-ENTRYPOINT ["MALLOC_ARENA_MAX=2","/app/main" ]
+ENV MALLOC_ARENA_MAX 2
+
+ENTRYPOINT ["/app/main" ]
