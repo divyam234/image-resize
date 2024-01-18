@@ -17,6 +17,7 @@ import (
 
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/felixge/httpsnoop"
+	"github.com/rs/cors"
 )
 
 func isIPorLocalhost(host string) bool {
@@ -127,8 +128,14 @@ func main() {
 		w.Write(imagebytes)
 	})
 
+	handler := cors.New(cors.Options{
+		AllowOriginFunc: func(origin string) bool { return true },
+		AllowedMethods:  []string{"GET", "HEAD", "OPTIONS", "POST"},
+		MaxAge:          86400,
+	}).Handler(http.DefaultServeMux)
+
 	logHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		m := httpsnoop.CaptureMetrics(http.DefaultServeMux, w, r)
+		m := httpsnoop.CaptureMetrics(handler, w, r)
 		log.Printf(
 			"%s %s (code=%d dt=%s)",
 			r.Method,
