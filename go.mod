@@ -2,6 +2,8 @@ module image-resizer
 
 go 1.21
 
+require github.com/felixge/httpsnoop v1.0.4
+
 require (
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

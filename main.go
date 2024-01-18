@@ -1,38 +1,40 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strconv"
+	"strings"
+	"syscall"
+	"time"
 
 	"github.com/davidbyttow/govips/v2/vips"
+	"github.com/felixge/httpsnoop"
 )
 
-func myLogger(messageDomain string, verbosity vips.LogLevel, message string) {
-	var messageLevelDescription string
-	switch verbosity {
-	case vips.LogLevelError:
-		messageLevelDescription = "error"
-	case vips.LogLevelCritical:
-		messageLevelDescription = "critical"
-	case vips.LogLevelWarning:
-		messageLevelDescription = "warning"
-	case vips.LogLevelMessage:
-		messageLevelDescription = "message"
-	case vips.LogLevelInfo:
-		messageLevelDescription = "info"
-	case vips.LogLevelDebug:
-		messageLevelDescription = "debug"
+func isIPorLocalhost(host string) bool {
+	hostname := strings.Split(host, ":")[0]
+
+	if hostname == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(hostname)
+	if ip != nil {
+		return true
 	}
 
-	log.Printf("[%v.%v] %v", messageDomain, messageLevelDescription, message)
+	return false
 }
 func main() {
 
-	vips.LoggingSettings(myLogger, vips.LogLevelError)
+	vips.LoggingSettings(nil, vips.LogLevelError)
 	defer vips.Shutdown()
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -58,7 +60,13 @@ func main() {
 			}
 		}
 
-		imagePath := "https:/" + r.URL.Path
+		protocol := "https:"
+
+		if isIPorLocalhost(strings.Split(r.URL.Path, "/")[1]) {
+			protocol = "https:"
+		}
+
+		imagePath := protocol + "/" + r.URL.Path
 
 		query := params.Encode()
 
@@ -119,11 +127,43 @@ func main() {
 		w.Write(imagebytes)
 	})
 
+	logHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m := httpsnoop.CaptureMetrics(http.DefaultServeMux, w, r)
+		log.Printf(
+			"%s %s (code=%d dt=%s)",
+			r.Method,
+			r.URL,
+			m.Code,
+			m.Duration,
+		)
+	})
+
 	port := "7860"
 
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")
 	}
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: logHandler,
+	}
 
-	http.ListenAndServe(":"+port, nil)
+	go func() {
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+		log.Println("Stopped serving new connections.")
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("HTTP shutdown error: %v", err)
+	}
+	log.Println("Graceful shutdown complete.")
 }
