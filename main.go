@@ -64,7 +64,7 @@ func main() {
 		protocol := "https:"
 
 		if isIPorLocalhost(strings.Split(r.URL.Path, "/")[1]) {
-			protocol = "https:"
+			protocol = "http:"
 		}
 
 		imagePath := protocol + "/" + r.URL.Path
