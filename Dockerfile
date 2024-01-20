@@ -1,6 +1,11 @@
-FROM golang:1.21-alpine as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine as builder
 
-RUN apk add pkgconfig git gcc musl-dev vips-dev
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN apk add --no-cache pkgconfig git gcc musl-dev vips-dev
 
 WORKDIR /var/task
 
@@ -9,9 +14,9 @@ RUN go mod download
 
 COPY main.go ./
 
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o main
+RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o main
 
-FROM alpine
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine
 
 RUN apk add --no-cache vips-dev
 

@@ -36,6 +36,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./
+          platforms: linux/amd64,linux/arm64
           pull: true
           push: true
           tags:  ${{ env.IMAGE_NAME }}:${{ github.ref_name }} , ${{ env.IMAGE_NAME }}:latest
