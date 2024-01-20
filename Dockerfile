@@ -12,9 +12,7 @@ RUN xx-info env
 
 RUN apk add --no-cache pkgconfig
 
-RUN xx-apk --no-cache gcc musl-dev vips-dev
-
-WORKDIR /var/task
+RUN xx-apk add --no-cache gcc musl-dev vips-dev
 
 COPY go.* ./
 
@@ -32,7 +30,7 @@ WORKDIR /app
 
 RUN adduser -D -u 1000 user
 
-COPY --chown=user:user --from=builder /var/task/main /app/main
+COPY --chown=user:user --from=builder /main /app/main
 
 USER user
 
