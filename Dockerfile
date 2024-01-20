@@ -1,26 +1,26 @@
-FROM --platform=${BUILDPLATFORM:-linux/amd64} tonistiigi/xx AS xx
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine as builder
-
-COPY --from=xx / /
+FROM --platform=${BUILDPLATFORM} tonistiigi/xx AS cc-helpers
+FROM --platform=${BUILDPLATFORM} golang:alpine as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN xx-info env
+RUN apk add clang lld libcap-utils
 
-RUN apk add --no-cache pkgconfig
+COPY --from=cc-helpers / /
 
 RUN xx-apk add --no-cache gcc musl-dev vips-dev
 
+ENV CGO_ENABLED=1
+
 COPY go.* ./
 
-RUN go mod download
+RUN go mod download -x
 
 COPY main.go ./
 
-RUN CGO_ENABLED=1 xx-go build -o main &&  xx-verify main
+RUN xx-go build -o main &&  xx-verify main
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine
 
