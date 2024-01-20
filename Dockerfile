@@ -15,8 +15,7 @@ RUN xx-apk add --no-cache gcc musl-dev vips-dev
 ENV CGO_ENABLED=1
 
 COPY go.* ./
-
-RUN go mod download -x
+RUN go mod download
 
 COPY main.go ./
 
@@ -30,7 +29,7 @@ WORKDIR /app
 
 RUN adduser -D -u 1000 user
 
-COPY --chown=user:user --from=builder /main /app/main
+COPY --chown=user:user --from=builder /var/task/main /app/main
 
 USER user
 
