@@ -8,9 +8,13 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
+RUN xx-info env
+
 RUN apk add --no-cache pkgconfig
 
-RUN /xx-apk --no-cache gcc musl-dev vips-dev
+RUN xx-apk --no-cache gcc musl-dev vips-dev
+
+WORKDIR /var/task
 
 COPY go.* ./
 
@@ -18,7 +22,7 @@ RUN go mod download
 
 COPY main.go ./
 
-RUN CGO_ENABLED=1 /xx-go build -o main &&  /xx-verify main
+RUN CGO_ENABLED=1 xx-go build -o main &&  xx-verify main
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine
 
@@ -28,7 +32,7 @@ WORKDIR /app
 
 RUN adduser -D -u 1000 user
 
-COPY --chown=user:user --from=builder /main /app/main
+COPY --chown=user:user --from=builder /var/task/main /app/main
 
 USER user
 
