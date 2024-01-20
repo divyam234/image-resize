@@ -10,7 +10,7 @@ ARG TARGETARCH
 
 RUN apk add --no-cache pkgconfig
 
-RUN xx-apk --no-cache gcc musl-dev vips-dev
+RUN /xx-apk --no-cache gcc musl-dev vips-dev
 
 COPY go.* ./
 
@@ -18,7 +18,7 @@ RUN go mod download
 
 COPY main.go ./
 
-RUN CGO_ENABLED=1 xx-go build -o main &&  xx-verify main
+RUN CGO_ENABLED=1 /xx-go build -o main &&  /xx-verify main
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine
 
