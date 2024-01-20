@@ -14,7 +14,10 @@ RUN xx-apk add --no-cache gcc musl-dev vips-dev
 
 ENV CGO_ENABLED=1
 
+WORKDIR /var/task
+
 COPY go.* ./
+
 RUN go mod download
 
 COPY main.go ./
