@@ -14,4 +14,4 @@ Example: http://localhost:8080/images.unsplash.com/photo-1682687220067-dced9a881
 **If any of height or width is missing image will be resized using original aspect ratio.**
 <br>
 <br>
-**Resizing Service works best with cache layer on top use cloudflare workers cache api ore deploy this service in front of cloudflare tunnel for caching.**
+**Resizing Service works best with cache layer on top use cloudflare workers cache api or deploy this service in front of cloudflare tunnel for caching.**
